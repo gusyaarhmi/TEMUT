@@ -1,0 +1,37 @@
+# Requirements untuk Aplikasi Steganografi DCT dengan Flask
+# Instalasi: pip install -r requirements.txt
+
+# Framework web untuk aplikasi Flask
+Flask==2.3.3
+
+# Library untuk pemrosesan gambar dan computer vision
+opencv-python==4.8.1.78
+
+# Library untuk operasi numerik dan array
+numpy==1.24.3
+
+# Library untuk enkripsi AES
+pycryptodome==3.19.0
+
+# Library untuk pengolahan gambar (digunakan untuk SSIM dan operasi gambar lainnya)
+Pillow==10.0.1
+
+# Library untuk menghitung SSIM (Structural Similarity Index)
+scikit-image==0.21.0
+
+# Library untuk plotting dan visualisasi (opsional, untuk analisis)
+matplotlib==3.7.2
+
+# Library untuk keamanan werkzeug (dependency Flask)
+Werkzeug==2.3.7
+
+# Library untuk template Jinja2 (dependency Flask)
+Jinja2==3.1.2
+
+# Library untuk parsing dan validasi (dependency Flask)
+MarkupSafe==2.1.3
+click==8.1.7
+itsdangerous==2.1.2
+
+# Library scipy sebagai dependency scikit-image
+scipy==1.11.3
