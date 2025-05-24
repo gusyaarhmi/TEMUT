@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TEMUT - Steganography with AES Encryption</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>TEMUT</h1>
+        <p>Penyisipan Teks Rahasia dalam Citra Digital Menggunakan Transformasi DCT dan Enkripsi AES</p>
+    </header>
+
+    <div class="container">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for message in messages %}
+                        <div class="flash-message">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <div class="card">
+            <h2>Upload Image</h2>
+            <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="file">Select an image:</label>
+                    <input type="file" name="file" id="file" accept=".png,.jpg,.jpeg">
+                </div>
+                <button type="submit" class="btn">Upload</button>
+            </form>
+            
+            {% if image_path and not encoded and not decoded and not robustness_tested %}
+            <div class="uploaded-image-preview">
+                <h3>Uploaded Image</h3>
+                <img src="{{ image_path }}" alt="Uploaded Image" class="preview-img">
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="action-cards">
+            <div class="card action-card">
+                <h3>Encode Message</h3>
+                <form action="{{ url_for('encode') }}" method="post">
+                    <div class="form-group">
+                        <label for="key">Key (16 characters):</label>
+                        <input type="password" name="key" id="key" required pattern=".{16,16}" title="Key must be exactly 16 characters">
+                    </div>
+                    <div class="form-group">
+                        <label for="message">Secret Message:</label>
+                        <textarea name="message" id="message" rows="5" required></textarea>
+                    </div>
+                    <input type="hidden" name="current_image" value="{{ image_path }}">
+                    <button type="submit" class="btn">Encode</button>
+                </form>
+            </div>
+
+            <div class="card action-card">
+                <h3>Decode Message</h3>
+                <form action="{{ url_for('decode') }}" method="post">
+                    <div class="form-group">
+                        <label for="decode-key">Key (16 characters):</label>
+                        <input type="password" name="key" id="decode-key" required pattern=".{16,16}" title="Key must be exactly 16 characters">
+                    </div>
+                    <input type="hidden" name="current_image" value="{{ image_path }}">
+                    <button type="submit" class="btn">Decode</button>
+                </form>
+
+                {% if decoded %}
+                <div class="decoded-message">
+                    <h4>Decoded Message:</h4>
+                    <pre>{{ decoded_message }}</pre>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if decoded %}
+        <div class="operations">
+            <div class="image-preview">
+                <h3>Decoded Image</h3>
+                <div class="image-container">
+                    <img src="{{ image_path }}" alt="Decoded Image" class="preview-img">
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if encoded %}
+        <div class="operations">
+            <div class="image-preview">
+                <h3>Image Preview</h3>
+                <div class="before-after-container">
+                    <div class="image-box">
+                        <h4>Before Encoding</h4>
+                        <img src="{{ original_path }}" alt="Original Image" class="preview-img">
+                    </div>
+                    <div class="image-box">
+                        <h4>After Encoding</h4>
+                        <img src="{{ image_path }}" alt="Encoded Image" class="preview-img">
+                    </div>
+                </div>
+
+                <div class="image-metrics">
+                    <div class="metric-card">
+                        <h4>Image Quality Metrics</h4>
+                        <p><strong>PSNR:</strong> {{ psnr_value }} dB</p>
+                        <p><strong>SSIM:</strong> {{ ssim_value }}</p>
+                        <hr>
+                        <p class="metric-explanation">
+                            PSNR mengukur tingkat kebisingan; SSIM mengukur kesamaan struktur visual.<br>
+                            Nilai SSIM mendekati 1 berarti gambar sangat mirip dengan aslinya.
+                        </p>
+                        <p class="metric-explanation">Nilai PSNR yang lebih tinggi menunjukkan kualitas gambar yang lebih baik (biasanya, nilai di atas 30 dB dianggap baik)</p>
+                    </div>
+                </div>
+                <div class="download-section">
+                    <a href="{{ url_for('download') }}" class="btn download-btn">Download Encoded Image</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Robustness Testing Card - Only shown after encoding -->
+        <div class="card robustness-card">
+            <h3>Uji Ketahanan (Robustness Test)</h3>
+            <p class="metric-explanation">
+                Uji ketahanan mengevaluasi kemampuan stego-image untuk mempertahankan pesan rahasia setelah mengalami berbagai jenis manipulasi.
+            </p>
+            <form action="{{ url_for('test_robustness') }}" method="post">
+                <div class="form-group">
+                    <label for="robustness-key">Key (16 characters):</label>
+                    <input type="password" name="robustness_key" id="robustness-key" required pattern=".{16,16}" title="Key must be exactly 16 characters">
+                </div>
+
+                <div class="form-group">
+                    <label for="test-type">Pilih Jenis Uji:</label>
+                    <select name="test_type" id="test-type" required>
+                        <option value="">-- Pilih Pengujian --</option>
+                        <option value="resize">Resize (Perubahan Ukuran)</option>
+                        <option value="gaussian">Gaussian Noise</option>
+                        <option value="salt_pepper">Salt & Pepper Noise</option>
+                        <option value="jpeg">Image Compression</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn">Jalankan Pengujian</button>
+            </form>
+        </div>
+        {% endif %}
+
+        {% if robustness_tested %}
+        <div class="card">
+            <h3>Hasil Uji Ketahanan: {{ test_type|title }}</h3>
+            <p class="success-rate">Tingkat Keberhasilan: <strong>{{ success_rate }}</strong></p>
+            
+            <div class="robustness-results">
+                {% for result in test_results %}
+                <div class="robustness-result-item {% if result.success %}success{% else %}failure{% endif %}">
+                    <div class="result-image">
+                        <img src="{{ url_for('static', filename=result.image_path) }}" alt="Test Result Image" class="result-img">
+                    </div>
+                    <div class="result-info">
+                        <h4>{{ result.type }} - {{ result.param }}</h4>
+                        <p class="result-status {% if result.success %}success-text{% else %}error-text{% endif %}">
+                            {% if result.success %}
+                            <span class="success-icon">✓</span> Berhasil
+                            {% else %}
+                            <span class="failure-icon">✗</span> Gagal
+                            {% endif %}
+                        </p>
+                        <div class="result-details">
+                            {% if result.success %}
+                            <p class="extracted-message"><strong>Pesan Terekstrak:</strong> 
+                                <span class="message-preview">{{ result.message[:50] }}{% if result.message|length > 50 %}...{% endif %}</span>
+                            </p>
+                            {% else %}
+                            <p class="error-message"><strong>Error:</strong> {{ result.message }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <footer>
+        <p>&copy; 2025 TEMUT (Text Nyumput) - Alifa & Husni</p>
+    </footer>
+</body>
+</html>
